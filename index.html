@@ -5,135 +5,352 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>e-GP Info. | ระบบสืบค้นข้อมูลพัสดุและยา</title>
     
-    <!-- Google Fonts & Tailwind CSS -->
-    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
-    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
-    <link href="[https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap](https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap)" rel="stylesheet">
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <!-- Google Fonts: Kanit & Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Lucide Icons -->
-    <script src="[https://unpkg.com/lucide@latest](https://unpkg.com/lucide@latest)"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        navy: {
-                            800: '#0f172a',
-                            900: '#020617',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Kanit', 'Sarabun', 'sans-serif'],
-                        body: ['Sarabun', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    
+    <!-- Pure Embedded Modern CSS (รับประกันหน้าเว็บไม่พัง 100%) -->
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .fade-in { animation: fadeIn 0.25s ease-in-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
+        :root {
+            --primary: #1e3a8a;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Sarabun', 'Kanit', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, h4, button, input { font-family: 'Kanit', sans-serif; }
+
+        /* Header Navigation */
+        .app-header {
+            background-color: #020617;
+            color: #ffffff;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #1e293b;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .header-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand { display: flex; align-items: center; gap: 0.75rem; }
+        .brand-icon {
+            background-color: var(--accent);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .brand-title { font-size: 1.25rem; font-weight: 700; line-height: 1.2; }
+        .brand-subtitle { font-size: 0.75rem; color: #94a3b8; }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--warning); }
+        .dot.success { background-color: var(--success); }
+        .dot.error { background-color: var(--danger); }
+
+        /* Main Workspace */
+        .main-container {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+            flex: 1;
+        }
+
+        /* Search Controls Bar */
+        .control-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+        }
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 280px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.625rem 1rem 0.625rem 2.5rem;
+            background-color: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input:focus {
+            border-color: var(--accent);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .btn-refresh {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+        .btn-refresh:hover { background-color: #e2e8f0; }
+
+        /* Grid Layout (Master - Detail) */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        @media (min-width: 1024px) {
+            .grid-layout { grid-template-columns: 7fr 5fr; }
+        }
+
+        /* Card Container */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);
+        }
+        .card-header {
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-title { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+
+        /* Data Table */
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 550px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.8125rem;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #334155;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: #334155;
+        }
+        tr.data-row { cursor: pointer; transition: background 0.15s; }
+        tr.data-row:hover { background-color: #eff6ff; }
+        tr.selected { background-color: #dbeafe !important; border-left: 4px solid var(--accent); }
+
+        /* Detail View Card */
+        .detail-header {
+            background-color: #0f172a;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-copy {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: opacity 0.2s;
+        }
+        .btn-copy:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-copy:hover:not(:disabled) { background-color: var(--primary-hover); }
+
+        .detail-body { padding: 1.25rem; min-height: 380px; }
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 4rem;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        @media (min-width: 640px) { .detail-grid { grid-template-columns: 1fr 1fr; } }
+        
+        .detail-item {
+            background-color: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+        .detail-label { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+        .detail-value { font-size: 0.85rem; font-weight: 600; color: var(--text-main); word-break: break-word; }
+
+        /* Toast Popup Notification */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background-color: #0f172a;
+            color: white;
+            padding: 0.875rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100;
+            border: 1px solid #334155;
+        }
+        .toast.show { transform: translateY(0); }
+        .toast-icon { color: var(--success); }
+
+        /* Error Box */
+        .error-box {
+            padding: 2rem;
+            text-align: center;
+            color: var(--danger);
+            line-height: 1.6;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased font-sans min-h-screen flex flex-col">
+<body>
 
-    <!-- Top Navigation Header -->
-    <header class="bg-navy-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg shadow-inner">
-                    <i data-lucide="database" class="w-5 h-5"></i>
+    <!-- Header Banner -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M21 5c0 1.66-4 3-9 3s-9-1.34-9-3"/></svg>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-tight tracking-wide text-slate-100">e-GP Info.</h1>
-                    <p class="text-xs text-slate-400 font-body">ระบบสืบค้นข้อมูลจัดซื้อจัดจ้างและรายการยา</p>
+                    <div class="brand-title">e-GP Info.</div>
+                    <div class="brand-subtitle">ระบบสืบค้นข้อมูลจัดซื้อจัดจ้างและรายการยา</div>
                 </div>
             </div>
-            
-            <div class="flex items-center space-x-4 text-xs font-body">
-                <span id="dataStatus" class="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                    <span class="w-2 h-2 mr-1.5 bg-amber-400 rounded-full animate-pulse"></span>
-                    กำลังโหลดข้อมูล...
-                </span>
+            <div class="status-badge">
+                <span id="statusDot" class="dot"></span>
+                <span id="statusText">กำลังเริ่มเชื่อมต่อ...</span>
             </div>
         </div>
     </header>
 
-    <!-- Main Workspace -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Main Content -->
+    <main class="main-container">
         
-        <!-- Search & Control Panel -->
-        <section class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-6">
-            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
-                
-                <!-- Search Input -->
-                <div class="relative w-full md:w-96">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input 
-                        type="text" 
-                        id="searchInput"
-                        placeholder="ค้นหาตามเลข PO, รายชื่อยา, รหัส..." 
-                        class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all font-body"
-                    >
-                </div>
-
-                <!-- Info Counters & Refresh -->
-                <div class="flex items-center justify-between w-full md:w-auto gap-4 text-xs font-body text-slate-500">
-                    <div>
-                        แสดงผล: <span id="recordCount" class="font-bold text-slate-700">0</span> / <span id="maxLimit" class="font-bold text-slate-700">200</span> รายการล่าสุด
-                    </div>
-                    <button 
-                        onclick="fetchData()" 
-                        class="inline-flex items-center space-x-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
-                        title="รีเฟรชข้อมูล"
-                    >
-                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                        <span>รีเฟรช</span>
-                    </button>
-                </div>
-
+        <!-- Controls -->
+        <section class="control-panel">
+            <div class="search-box">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาตามเลข PO, รายชื่อยา, รหัส...">
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 1rem; align-items: center;">
+                <div>แสดงผล: <strong id="countDisplay">0</strong> รายการ</div>
+                <button onclick="fetchData()" class="btn-refresh">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                    รีเฟรช
+                </button>
             </div>
         </section>
 
-        <!-- Master-Detail Split Grid View -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Grid Layout -->
+        <div class="grid-layout">
             
-            <!-- MASTER VIEW: Data Table -->
-            <section class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h2 class="font-semibold text-slate-800 text-sm flex items-center gap-2">
-                        <i data-lucide="list" class="w-4 h-4 text-blue-600"></i>
-                        รายการข้อมูลหลัก (Master View)
-                    </h2>
-                    <span class="text-xs text-slate-400 font-body">คลิกที่แถวเพื่อดูรายละเอียด</span>
+            <!-- MASTER TABLE -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">📋 รายการข้อมูลหลัก (Master View)</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">คลิกแถวเพื่อดูรายละเอียด</div>
                 </div>
-
-                <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                    <table class="w-full text-left text-xs font-body border-collapse">
-                        <thead class="bg-slate-100 text-slate-700 sticky top-0 z-10 font-sans border-b border-slate-200">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
                             <tr id="tableHeader">
-                                <th class="p-3 font-semibold">#</th>
-                                <th class="p-3 font-semibold">คอลัมน์ A</th>
-                                <th class="p-3 font-semibold">คอลัมน์ B</th>
-                                <th class="p-3 font-semibold">คอลัมน์ C</th>
-                                <th class="p-3 font-semibold text-right">การกระทำ</th>
+                                <th style="width: 50px; text-align: center;">#</th>
+                                <th>คอลัมน์ 1</th>
+                                <th>คอลัมน์ 2</th>
+                                <th>คอลัมน์ 3</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-100">
+                        <tbody id="tableBody">
                             <tr>
-                                <td colspan="5" class="text-center py-12 text-slate-400">
-                                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600"></i>
-                                    กำลังเชื่อมต่อฐานข้อมูล Google Sheets...
+                                <td colspan="4" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                    กำลังดึงข้อมูลจาก Google Sheets...
                                 </td>
                             </tr>
                         </tbody>
@@ -141,29 +358,19 @@
                 </div>
             </section>
 
-            <!-- DETAIL VIEW: Grid / Card View -->
-            <section class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden sticky top-20">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-900 text-white">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i>
-                        <h2 class="font-semibold text-sm">รายละเอียดแบบเจาะลึก (Detail View)</h2>
-                    </div>
-                    <button 
-                        id="copyBtn" 
-                        onclick="copyDetailData()" 
-                        disabled
-                        class="inline-flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-xs px-3 py-1.5 rounded-md font-medium transition shadow-sm"
-                    >
-                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                        <span>คัดลอกข้อมูล</span>
+            <!-- DETAIL VIEW CARD -->
+            <section class="card">
+                <div class="detail-header">
+                    <div style="font-weight: 600; font-size: 0.9rem;">🔎 รายละเอียดแบบเจาะลึก (Detail View)</div>
+                    <button id="copyBtn" onclick="copyData()" class="btn-copy" disabled>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                        คัดลอกข้อมูล
                     </button>
                 </div>
-
-                <!-- Card Content Display -->
-                <div id="detailContainer" class="p-5 font-body min-h-[400px] flex items-center justify-center text-slate-400">
-                    <div class="text-center">
-                        <i data-lucide="mouse-pointer-click" class="w-10 h-10 mx-auto mb-2 text-slate-300 stroke-[1.5]"></i>
-                        <p class="text-sm">เลือกรายการจากตารางฝั่งซ้าย<br>เพื่อแสดงข้อมูลเจาะลึกที่นี่</p>
+                <div id="detailBody" class="detail-body">
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 0.5rem; opacity: 0.5;"><path d="M15 15l6 6m-11-4a7 7 0 110-14 7 7 0 010 14z"/></svg>
+                        <p>เลือกรายการจากตารางฝั่งซ้าย<br>เพื่อแสดงข้อมูลเจาะลึกที่นี่</p>
                     </div>
                 </div>
             </section>
@@ -171,242 +378,189 @@
         </div>
     </main>
 
-    <!-- Toast Notification (Popup เมื่อ Copy สำเร็จ) -->
-    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 ease-out pointer-events-none">
-        <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center space-x-3">
-            <div class="bg-emerald-500/20 text-emerald-400 p-1.5 rounded-lg">
-                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-            </div>
-            <div>
-                <p class="text-xs font-semibold text-slate-100 font-sans">คัดลอกสำเร็จ!</p>
-                <p class="text-[11px] text-slate-300 font-body">คัดลอกข้อมูลรายการลง Clipboard เรียบร้อยแล้ว</p>
-            </div>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <div>
+            <div style="font-weight: 600; font-size: 0.85rem;">คัดลอกสำเร็จ!</div>
+            <div style="font-size: 0.75rem; color: #94a3b8;">คัดลอกข้อมูลลง Clipboard เรียบร้อยแล้ว</div>
         </div>
     </div>
 
-    <!-- JavaScript Controller Logic -->
     <script>
         const SHEET_ID = '1RO-XGP28xQicDv7ziEVvZWX4xcamcgfHXhj39uMXUoU';
         const SHEET_NAME = 'Value';
-        const ROW_LIMIT = 200;
 
         let rawData = [];
         let headers = [];
         let filteredData = [];
-        let selectedRowData = null;
-        let currentSort = { columnIndex: null, direction: 'asc' };
+        let selectedRow = null;
 
         async function fetchData() {
-            updateStatus('loading', 'กำลังโหลดข้อมูล...');
-            const url = `[https://docs.google.com/spreadsheets/d/$](https://docs.google.com/spreadsheets/d/$){SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&tq=${encodeURIComponent('SELECT * LIMIT ' + ROW_LIMIT)}`;
+            updateStatus('loading', 'กำลังโหลด...');
+            
+            // ใช้ CSV Endpoint เพื่อลดปัญหา CORS และการบล็อกสิทธิ์ของ Google
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
             try {
-                const response = await fetch(url);
-                const text = await response.text();
+                const response = await fetch(csvUrl);
+                if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
                 
-                const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-                const json = JSON.parse(jsonText);
+                const csvText = await response.text();
+                parseCSV(csvText);
 
-                if (json.status === 'error') {
-                    throw new Error(json.errors[0].detailed_message);
-                }
-
-                headers = json.table.cols.map((col, idx) => col.label ? col.label.trim() : `คอลัมน์ ${idx + 1}`);
-                
-                rawData = json.table.rows.map(row => {
-                    return row.c.map(cell => {
-                        if (!cell) return '';
-                        return cell.f ? cell.f : (cell.v !== null ? cell.v : '');
-                    });
-                });
+                if (rawData.length === 0) throw new Error('ไม่พบข้อมูลในตาราง');
 
                 filteredData = [...rawData];
-                
-                renderTableHeader();
-                renderTableBody(filteredData);
+                renderHeader();
+                renderTable(filteredData);
                 updateStatus('success', 'เชื่อมต่อปกติ');
-                document.getElementById('recordCount').innerText = rawData.length;
 
-            } catch (error) {
-                console.error('Data Fetch Error:', error);
-                updateStatus('error', 'โหลดข้อมูลล้มเหลว');
-                document.getElementById('tableBody').innerHTML = `
-                    <tr>
-                        <td colspan="5" class="text-center py-8 text-rose-500 font-body">
-                            <i data-lucide="alert-triangle" class="w-6 h-6 mx-auto mb-2"></i>
-                            ไม่สามารถดึงข้อมูลได้ โปรดตรวจสอบสิทธิ์การเข้าถึง Google Sheet (ต้องตั้งเป็น Anyone with link)
-                        </td>
-                    </tr>`;
-                lucide.createIcons();
+            } catch (err) {
+                console.error('Fetch Error:', err);
+                updateStatus('error', 'ข้อผิดพลาด');
+                renderErrorUI(err.message);
             }
         }
 
-        function renderTableHeader() {
-            const thead = document.getElementById('tableHeader');
-            let html = `<th class="p-3 font-semibold text-slate-500 w-12 text-center">#</th>`;
-            
-            const displayCols = headers.slice(0, 3);
-            displayCols.forEach((header, index) => {
-                html += `
-                    <th class="p-3 font-semibold cursor-pointer hover:bg-slate-200 transition text-slate-700" onclick="sortData(${index})">
-                        <div class="flex items-center space-x-1">
-                            <span>${header}</span>
-                            <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
-                        </div>
-                    </th>`;
-            });
-            
-            html += `<th class="p-3 font-semibold text-right text-slate-700">การจัดการ</th>`;
-            thead.innerHTML = html;
-            lucide.createIcons();
+        // ระบบแปลง CSV เป็น Array อย่างรวดเร็ว
+        function parseCSV(text) {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            if (lines.length === 0) return;
+
+            headers = parseCSVLine(lines[0]);
+            rawData = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const row = parseCSVLine(lines[i]);
+                if (row.length > 0) rawData.push(row);
+            }
         }
 
-        function renderTableBody(data) {
-            const tbody = document.getElementById('tableBody');
+        function parseCSVLine(line) {
+            const result = [];
+            let insideQuote = false;
+            let entry = '';
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"' && line[i+1] === '"') {
+                    entry += '"';
+                    i++;
+                } else if (char === '"') {
+                    insideQuote = !insideQuote;
+                } else if (char === ',' && !insideQuote) {
+                    result.push(entry.trim());
+                    entry = '';
+                } else {
+                    entry += char;
+                }
+            }
+            result.push(entry.trim());
+            return result;
+        }
+
+        function renderHeader() {
+            const thead = document.getElementById('tableHeader');
+            let html = `<th style="width: 45px; text-align:center;">#</th>`;
             
+            const displayCols = headers.slice(0, 3);
+            displayCols.forEach(h => {
+                html += `<th>${h || 'คอลัมน์'}</th>`;
+            });
+            thead.innerHTML = html;
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            document.getElementById('countDisplay').innerText = data.length;
+
             if (data.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="text-center py-10 text-slate-400 font-body">
-                            ไม่พบข้อมูลที่ตรงกับการค้นหา
-                        </td>
-                    </tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">ไม่พบข้อมูลที่ตรงคำค้นหา</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = data.map((row, rowIndex) => {
-                const col1 = row[0] || '-';
-                const col2 = row[1] || '-';
-                const col3 = row[2] || '-';
-
-                return `
-                    <tr 
-                        id="row-${rowIndex}" 
-                        onclick="selectRow(${rowIndex})"
-                        class="hover:bg-blue-50/60 cursor-pointer transition-colors group border-b border-slate-100"
-                    >
-                        <td class="p-3 text-center text-slate-400 font-mono text-[11px]">${rowIndex + 1}</td>
-                        <td class="p-3 font-medium text-slate-800 group-hover:text-blue-700">${col1}</td>
-                        <td class="p-3 text-slate-600">${col2}</td>
-                        <td class="p-3 text-slate-600">${col3}</td>
-                        <td class="p-3 text-right">
-                            <button class="inline-flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded hover:bg-blue-100/50 transition">
-                                <span>ดูข้อมูล</span>
-                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            lucide.createIcons();
+            tbody.innerHTML = data.map((row, idx) => `
+                <tr class="data-row" id="row-${idx}" onclick="selectRow(${idx})">
+                    <td style="text-align:center; color: var(--text-muted); font-size:0.75rem;">${idx + 1}</td>
+                    <td style="font-weight:600;">${row[0] || '-'}</td>
+                    <td>${row[1] || '-'}</td>
+                    <td>${row[2] || '-'}</td>
+                </tr>
+            `).join('');
         }
 
-        function selectRow(index) {
-            document.querySelectorAll('#tableBody tr').forEach(tr => tr.classList.remove('bg-blue-100/70', 'border-l-4', 'border-blue-600'));
-            const activeRow = document.getElementById(`row-${index}`);
-            if (activeRow) activeRow.classList.add('bg-blue-100/70', 'border-l-4', 'border-blue-600');
+        function selectRow(idx) {
+            document.querySelectorAll('.data-row').forEach(r => r.classList.remove('selected'));
+            const activeRow = document.getElementById(`row-${idx}`);
+            if (activeRow) activeRow.classList.add('selected');
 
-            selectedRowData = filteredData[index];
-            const container = document.getElementById('detailContainer');
+            selectedRow = filteredData[idx];
             document.getElementById('copyBtn').disabled = false;
 
-            let gridHtml = `<div class="w-full space-y-4 fade-in">`;
+            const detailBody = document.getElementById('detailBody');
+            let html = `<div class="detail-grid">`;
             
-            gridHtml += `
-                <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg flex items-center justify-between">
-                    <div>
-                        <span class="text-[10px] font-semibold text-blue-600 tracking-wider uppercase">รายการที่เลือก</span>
-                        <h3 class="font-bold text-slate-800 text-sm">${selectedRowData[0] || 'ไม่มีระบุ'}</h3>
-                    </div>
-                    <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold">
-                        พร้อมใช้งาน
-                    </span>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            `;
-
-            headers.forEach((header, colIdx) => {
-                const val = selectedRowData[colIdx] !== undefined && selectedRowData[colIdx] !== '' ? selectedRowData[colIdx] : '-';
-                gridHtml += `
-                    <div class="p-3 bg-slate-50 border border-slate-200/70 rounded-lg hover:border-slate-300 transition">
-                        <p class="text-[11px] text-slate-400 font-medium mb-1">${header}</p>
-                        <p class="text-xs font-semibold text-slate-700 break-words">${val}</p>
+            headers.forEach((h, colIdx) => {
+                const val = selectedRow[colIdx] !== undefined && selectedRow[colIdx] !== '' ? selectedRow[colIdx] : '-';
+                html += `
+                    <div class="detail-item">
+                        <div class="detail-label">${h || `คอลัมน์ ${colIdx+1}`}</div>
+                        <div class="detail-value">${val}</div>
                     </div>
                 `;
             });
-
-            gridHtml += `</div></div>`;
-            container.innerHTML = gridHtml;
+            html += `</div>`;
+            detailBody.innerHTML = html;
         }
 
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const query = e.target.value.toLowerCase().trim();
-            filteredData = rawData.filter(row => {
-                return row.some(cell => String(cell).toLowerCase().includes(query));
-            });
-            renderTableBody(filteredData);
-            document.getElementById('recordCount').innerText = filteredData.length;
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            filteredData = rawData.filter(row => row.some(cell => String(cell).toLowerCase().includes(query)));
+            renderTable(filteredData);
         });
 
-        function sortData(colIndex) {
-            const direction = (currentSort.columnIndex === colIndex && currentSort.direction === 'asc') ? 'desc' : 'asc';
-            currentSort = { columnIndex: colIndex, direction };
-
-            filteredData.sort((a, b) => {
-                const valA = a[colIndex] || '';
-                const valB = b[colIndex] || '';
-                
-                return direction === 'asc' 
-                    ? String(valA).localeCompare(String(valB), 'th', { numeric: true })
-                    : String(valB).localeCompare(String(valA), 'th', { numeric: true });
+        function copyData() {
+            if (!selectedRow) return;
+            let text = `=== รายละเอียด e-GP Info. ===\n`;
+            headers.forEach((h, i) => {
+                text += `${h}: ${selectedRow[i] || '-'}\n`;
             });
 
-            renderTableBody(filteredData);
-        }
-
-        function copyDetailData() {
-            if (!selectedRowData) return;
-
-            let textToCopy = `=== รายละเอียดข้อมูล e-GP Info. ===\n`;
-            headers.forEach((header, idx) => {
-                textToCopy += `${header}: ${selectedRowData[idx] || '-'}\n`;
-            });
-
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                showToast();
-            }).catch(err => {
-                console.error('Copy Failed:', err);
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
             });
         }
 
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-            }, 3000);
+        function updateStatus(state, msg) {
+            const dot = document.getElementById('statusDot');
+            const txt = document.getElementById('statusText');
+            dot.className = 'dot ' + (state === 'success' ? 'success' : state === 'error' ? 'error' : '');
+            txt.innerText = msg;
         }
 
-        function updateStatus(type, message) {
-            const statusEl = document.getElementById('dataStatus');
-            if (type === 'loading') {
-                statusEl.className = 'inline-flex items-center px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
-                statusEl.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-amber-400 rounded-full animate-pulse"></span>${message}`;
-            } else if (type === 'success') {
-                statusEl.className = 'inline-flex items-center px-2.5 py-1 rounded-full bg-slate-800 text-emerald-400 border border-slate-700';
-                statusEl.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full"></span>${message}`;
-            } else {
-                statusEl.className = 'inline-flex items-center px-2.5 py-1 rounded-full bg-slate-800 text-rose-400 borde border-slate-700';
-                statusEl.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-rose-500 rounded-full"></span>${message}`;
-            }
+        function renderErrorUI(errorMsg) {
+            document.getElementById('tableBody').innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        <div class="error-box">
+                            <p style="font-weight:700; font-size:1rem; margin-bottom:0.5rem;">⚠️ ดึงข้อมูลล้มเหลว</p>
+                            <p style="font-size:0.85rem; color: var(--text-muted);">สาเหตุ: ${errorMsg}</p>
+                            <div style="margin-top:1rem; font-size:0.8rem; text-align:left; background:#fff1f2; padding:1rem; border-radius:0.5rem; border:1px solid #fecdd3;">
+                                <strong>ขั้นตอนแก้ไขสำหรับ Google Sheet:</strong><br>
+                                1. เปิด Google Sheet แล้วไปที่เมนู <b>ไฟล์ (File)</b> ➔ <b>แชร์ (Share)</b> ➔ <b>เผยแพร่ไปยังเว็บ (Publish to web)</b><br>
+                                2. ในช่องแรก เลือกชีท <b>"Value"</b> แล้วกดปุ่ม <b>"เผยแพร่ (Publish)"</b><br>
+                                3. หากใช้ Email โรงพยาบาล/องค์กร แนะนำให้ก๊อปปี้ไฟล์นี้ไปไว้ใน <b>Google Account ส่วนตัว (@gmail.com)</b>
+                            </div>
+                        </div>
+                    </td>
+                </tr>`;
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchData();
-        });
+        document.addEventListener('DOMContentLoaded', fetchData);
     </script>
 </body>
 </html>
-                    
+  
