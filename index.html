@@ -1,13 +1,3 @@
-﻿* **Data Fetching Strategy**: ดึงข้อมูลผ่าน **Google Visualization API (GViz)** พร้อมใส่ SQL Query `SELECT * LIMIT 200` เพื่อจำกัดจำนวนการดึงข้อมูลจาก Server โดยตรง ช่วยลดภาระ Bandwidth และแก้ปัญหาความอืดของหน้าเว็บ
-* **UI/UX Design Concept**: เน้นความเรียบหรู (Luxury Slate & Navy Blue Theme) ใช้แบบอักษร Kanit/Sarabun อ่านง่าย ใช้ Contrast Ratio ที่ถูกต้องตามมาตรฐาน accessibility (WCAG 2.1)
-
----
-
-### 2. ซอร์สโค้ดฉบับสมบูรณ์ (Single-File Production Ready)
-
-คุณสามารถนำโค้ดนี้ไปเซฟเป็นไฟล์ `index.html` และเปิดใช้งานบน Web Server หรือ GitHub Pages ได้ทันที
-
-```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -29,12 +19,6 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            800: '#166534',
-                            900: '#14532d',
-                        },
                         navy: {
                             800: '#0f172a',
                             900: '#020617',
@@ -50,26 +34,11 @@
     </script>
     
     <style>
-        /* Custom Scrollbar for professional look */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        
-        /* Smooth transitions */
-        .fade-in {
-            animation: fadeIn 0.25s ease-in-out;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .fade-in { animation: fadeIn 0.25s ease-in-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(4px); }
             to { opacity: 1; transform: translateY(0); }
@@ -139,7 +108,7 @@
         <!-- Master-Detail Split Grid View -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
-            <!-- MASTER VIEW: Data Table (7 Columns on Large Screens) -->
+            <!-- MASTER VIEW: Data Table -->
             <section class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
                 <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h2 class="font-semibold text-slate-800 text-sm flex items-center gap-2">
@@ -154,18 +123,13 @@
                         <thead class="bg-slate-100 text-slate-700 sticky top-0 z-10 font-sans border-b border-slate-200">
                             <tr id="tableHeader">
                                 <th class="p-3 font-semibold">#</th>
-                                <th class="p-3 font-semibold cursor-pointer hover:bg-slate-200 transition" onclick="sortData(0)">
-                                    คอลัมน์ A <i data-lucide="arrow-up-down" class="inline w-3 h-3 ml-0.5"></i>
-                                </th>
-                                <th class="p-3 font-semibold cursor-pointer hover:bg-slate-200 transition" onclick="sortData(1)">
-                                    คอลัมน์ B <i data-lucide="arrow-up-down" class="inline w-3 h-3 ml-0.5"></i>
-                                </th>
+                                <th class="p-3 font-semibold">คอลัมน์ A</th>
+                                <th class="p-3 font-semibold">คอลัมน์ B</th>
                                 <th class="p-3 font-semibold">คอลัมน์ C</th>
                                 <th class="p-3 font-semibold text-right">การกระทำ</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-slate-100">
-                            <!-- Rows will be injected here via JavaScript -->
                             <tr>
                                 <td colspan="5" class="text-center py-12 text-slate-400">
                                     <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600"></i>
@@ -222,10 +186,9 @@
 
     <!-- JavaScript Controller Logic -->
     <script>
-        // CONFIG & STATE
         const SHEET_ID = '1RO-XGP28xQicDv7ziEVvZWX4xcamcgfHXhj39uMXUoU';
         const SHEET_NAME = 'Value';
-        const ROW_LIMIT = 200; // จำกัด 200 แถวตามความต้องการ
+        const ROW_LIMIT = 200;
 
         let rawData = [];
         let headers = [];
@@ -233,16 +196,14 @@
         let selectedRowData = null;
         let currentSort = { columnIndex: null, direction: 'asc' };
 
-        // 1. FETCH DATA FROM GOOGLE SHEETS VIA GVIZ API
         async function fetchData() {
             updateStatus('loading', 'กำลังโหลดข้อมูล...');
-            const url = `[https://docs.google.com/spreadsheets/d/$](https://docs.google.com/spreadsheets/d/$){SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&tq=${encodeURIComponent('SELECT * LIMIT ' + ROW_LIMIT)}`;
+            const url = `[https://docs.google.com/spreadsheets/d/$](https://docs.google.com/spreadsheets/d/$){SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&tq=${encodeURIComponent('SELECT * LIMIT ' + ROW_LIMIT)}`;
 
             try {
                 const response = await fetch(url);
                 const text = await response.text();
                 
-                // Parse GViz Response JSON Format
                 const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
                 const json = JSON.parse(jsonText);
 
@@ -250,10 +211,8 @@
                     throw new Error(json.errors[0].detailed_message);
                 }
 
-                // Extract Column Names
                 headers = json.table.cols.map((col, idx) => col.label ? col.label.trim() : `คอลัมน์ ${idx + 1}`);
                 
-                // Extract Cell Values
                 rawData = json.table.rows.map(row => {
                     return row.c.map(cell => {
                         if (!cell) return '';
@@ -275,19 +234,17 @@
                     <tr>
                         <td colspan="5" class="text-center py-8 text-rose-500 font-body">
                             <i data-lucide="alert-triangle" class="w-6 h-6 mx-auto mb-2"></i>
-                            ไม่สามารถดึงข้อมูลได้ โปรดตรวจสอบสิทธิ์การเข้าถึง Google Sheet
+                            ไม่สามารถดึงข้อมูลได้ โปรดตรวจสอบสิทธิ์การเข้าถึง Google Sheet (ต้องตั้งเป็น Anyone with link)
                         </td>
                     </tr>`;
                 lucide.createIcons();
             }
         }
 
-        // 2. RENDER TABLE HEADER
         function renderTableHeader() {
             const thead = document.getElementById('tableHeader');
             let html = `<th class="p-3 font-semibold text-slate-500 w-12 text-center">#</th>`;
             
-            // แสดง 3 คอลัมน์หลักในตารางเพื่อความสะอาดตา
             const displayCols = headers.slice(0, 3);
             displayCols.forEach((header, index) => {
                 html += `
@@ -304,7 +261,6 @@
             lucide.createIcons();
         }
 
-        // 3. RENDER TABLE BODY (MASTER VIEW)
         function renderTableBody(data) {
             const tbody = document.getElementById('tableBody');
             
@@ -346,9 +302,7 @@
             lucide.createIcons();
         }
 
-        // 4. SELECT ROW & RENDER DETAIL VIEW (GRID / CARD)
         function selectRow(index) {
-            // Highlight active row
             document.querySelectorAll('#tableBody tr').forEach(tr => tr.classList.remove('bg-blue-100/70', 'border-l-4', 'border-blue-600'));
             const activeRow = document.getElementById(`row-${index}`);
             if (activeRow) activeRow.classList.add('bg-blue-100/70', 'border-l-4', 'border-blue-600');
@@ -357,10 +311,8 @@
             const container = document.getElementById('detailContainer');
             document.getElementById('copyBtn').disabled = false;
 
-            // Generate Grid View Cards for Details
             let gridHtml = `<div class="w-full space-y-4 fade-in">`;
             
-            // Highlight Badge Header
             gridHtml += `
                 <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg flex items-center justify-between">
                     <div>
@@ -388,7 +340,6 @@
             container.innerHTML = gridHtml;
         }
 
-        // 5. SEARCH & FILTER FUNCTIONALITY
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase().trim();
             filteredData = rawData.filter(row => {
@@ -398,7 +349,6 @@
             document.getElementById('recordCount').innerText = filteredData.length;
         });
 
-        // 6. SORTING FUNCTIONALITY
         function sortData(colIndex) {
             const direction = (currentSort.columnIndex === colIndex && currentSort.direction === 'asc') ? 'desc' : 'asc';
             currentSort = { columnIndex: colIndex, direction };
@@ -415,11 +365,9 @@
             renderTableBody(filteredData);
         }
 
-        // 7. COPY TO CLIPBOARD & TOAST SYSTEM
         function copyDetailData() {
             if (!selectedRowData) return;
 
-            // Format Data into clean text
             let textToCopy = `=== รายละเอียดข้อมูล e-GP Info. ===\n`;
             headers.forEach((header, idx) => {
                 textToCopy += `${header}: ${selectedRowData[idx] || '-'}\n`;
@@ -441,7 +389,6 @@
             }, 3000);
         }
 
-        // 8. STATUS BADGE UPDATER
         function updateStatus(type, message) {
             const statusEl = document.getElementById('dataStatus');
             if (type === 'loading') {
@@ -451,15 +398,15 @@
                 statusEl.className = 'inline-flex items-center px-2.5 py-1 rounded-full bg-slate-800 text-emerald-400 border border-slate-700';
                 statusEl.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full"></span>${message}`;
             } else {
-                statusEl.className = 'inline-flex items-center px-2.5 py-1 rounded-full bg-slate-800 text-rose-400 border border-slate-700';
+                statusEl.className = 'inline-flex items-center px-2.5 py-1 rounded-full bg-slate-800 text-rose-400 borde border-slate-700';
                 statusEl.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-rose-500 rounded-full"></span>${message}`;
             }
         }
 
-        // INITIALIZE ON LOAD
         document.addEventListener('DOMContentLoaded', () => {
             fetchData();
         });
     </script>
 </body>
 </html>
+                    
