@@ -177,3 +177,127 @@ function copyCardText(btnElement, textToCopy) {
     }, 2000);
   });
 }
+// File: app.js
+
+// 1. Helper Function สำหรับตรวจสอบสถานะและส่งคืน Class สี + Badge HTML
+function getMedicineStatusStyle(statusText) {
+  if (!statusText) {
+    return {
+      badgeHtml: "",
+      cardStyle: "bg-gray-900 border-gray-800 hover:border-blue-500/80"
+    };
+  }
+
+  const status = statusText.toString().trim().toLowerCase();
+
+  // 🟢 เงื่อนไข 1: มีคำว่า "รับยาแล้ว" (รองรับกรณีมี วันที่/เวลา ต่อท้าย)
+  if (status.includes("รับยาแล้ว")) {
+    return {
+      badgeHtml: `
+        <span class="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-500/30 shadow-sm">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          ยามาแล้ว
+        </span>
+      `,
+      cardStyle: "bg-emerald-950/20 border-emerald-800/60 hover:border-emerald-400 shadow-emerald-950/20"
+    };
+  }
+
+  // 🟡 เงื่อนไข 2: ส่งไม่ครบ / รับยาบางส่วน / ขาดส่ง
+  if (status.includes("บางส่วน") || status.includes("ไม่ครบ") || status.includes("ขาด")) {
+    return {
+      badgeHtml: `
+        <span class="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-500/30 shadow-sm">
+          <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+          ยาส่งไม่ครบ
+        </span>
+      `,
+      cardStyle: "bg-amber-950/20 border-amber-800/60 hover:border-amber-400 shadow-amber-950/20"
+    };
+  }
+
+  // ⚪ กรณีอื่นๆ
+  return {
+    badgeHtml: "",
+    cardStyle: "bg-gray-900 border-gray-800 hover:border-blue-500/80"
+  };
+}
+
+
+// 2. ปรับปรุงฟังก์ชัน renderMasterGrid ให้ดึงสถานะมาแสดงผล
+function renderMasterGrid(data) {
+  const masterGrid = document.getElementById("master-grid");
+
+  if (!data || data.length === 0) {
+    masterGrid.innerHTML = `
+      <div class="col-span-full text-center py-20 text-gray-400 bg-gray-900 rounded-2xl border border-gray-800">
+        ไม่พบข้อมูลในระบบ
+      </div>
+    `;
+    return;
+  }
+
+  masterGrid.innerHTML = data.map((item, index) => {
+    // ดึงค่าตาม Key คอลัมน์แบบยืดหยุ่น
+    const po = getFieldValue(item, ["PO", "เลขที่ PO", "เลข PO", "PO No"]) || "N/A";
+    const projectName = getFieldValue(item, ["ชื่อโครงการ", "โครงการ", "รายการ", "ชื่อรายการ"]) || "ไม่ระบุชื่อโครงการ";
+    const budgetVal = getFieldValue(item, ["งบประมาณโครงการ", "งบประมาณ", "จำนวนเงิน", "วงเงิน"]);
+    const budget = budgetVal ? `${budgetVal} บาท` : "-";
+
+    // ดึงค่าสถานะรับยา
+    const statusText = getFieldValue(item, ["สถานะรับยา", "สถานะการรับยา", "สถานะยา", "สถานะ", "Status"]) || "";
+    
+    // คำนวณ Style การ์ดและ Badge จากสถานะรับยา
+    const { badgeHtml, cardStyle } = getMedicineStatusStyle(statusText);
+
+    return `
+      <div class="${cardStyle} border rounded-2xl p-5 transition-all duration-200 shadow-lg flex flex-col justify-between group relative overflow-hidden">
+        
+        <div>
+          <!-- Header Card: PO, Badge สถานะยา, และ งบประมาณ -->
+          <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="bg-blue-950/80 text-blue-300 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border border-blue-800/50">
+                PO: ${po}
+              </span>
+              <!-- ป้ายกำกับสถานะรับยา (ถ้ามี) -->
+              ${badgeHtml}
+            </div>
+
+            <span class="text-xs text-emerald-400 font-mono font-medium bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-800/40">
+              งบ: ${budget}
+            </span>
+          </div>
+
+          <!-- ชื่อโครงการ/รายการ -->
+          <h2 class="text-base font-medium text-gray-100 mb-2 line-clamp-2 group-hover:text-blue-300 transition">
+            ${projectName}
+          </h2>
+
+          <!-- แสดงข้อความสถานะรับยาฉบับเต็มด้านล่างชื่อโครงการ (ถ้ามี) -->
+          ${statusText ? `
+            <div class="mt-2 text-xs text-gray-400 flex items-center gap-1.5 bg-black/20 p-2 rounded-lg border border-white/5">
+              <i data-lucide="info" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0"></i>
+              <span class="truncate">${statusText}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- ปุ่มดูรายละเอียด -->
+        <button 
+          onclick="openDetailModal(${index})"
+          class="mt-4 w-full flex items-center justify-center gap-2 bg-gray-800/90 hover:bg-blue-600 text-gray-200 hover:text-white py-2.5 px-4 rounded-xl text-sm font-medium transition duration-200 shadow-sm"
+        >
+          <i data-lucide="eye" class="w-4 h-4"></i>
+          ดูรายละเอียดทั้งหมด
+        </button>
+      </div>
+    `;
+  }).join("");
+
+  lucide.createIcons();
+            }
+                
