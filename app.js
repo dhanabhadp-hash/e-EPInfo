@@ -79,66 +79,151 @@ async function fetchSheetData() {
 // ส่วนที่ 2: Helper Functions (เครื่องมือช่วยประมวลผล)
 // ==========================================
 
-// 2.1 ค้นหาชื่อคอลัมน์แบบยืดหยุ่น (ป้องกันชื่อคอลัมน์เพี้ยน)
-function getFieldValue(item, possibleKeys) {
-  const itemKeys = Object.keys(item);
-  for (const targetKey of possibleKeys) {
-    const foundKey = itemKeys.find(k => 
-      k.trim().toLowerCase() === targetKey.trim().toLowerCase() ||
-      k.trim().toLowerCase().includes(targetKey.trim().toLowerCase())
-    );
-    if (foundKey && item[foundKey] !== undefined && item[foundKey] !== "") {
-      return item[foundKey];
-    }
-  }
-  return null;
-}
-
-// 2.2 ตรวจสอบสถานะและส่งคืน Class สี + Badge HTML ของการ์ด
+1. Helper Function: ตรวจสอบสถานะรับ-ส่งยา และส่งคืน Style + Badge + Text Color
+// ==========================================
 function getMedicineStatusStyle(statusText) {
   if (!statusText) {
     return {
       badgeHtml: "",
-      cardStyle: "bg-gray-900 border-gray-800 hover:border-blue-500/80"
+      cardStyle: "bg-gray-900 border-gray-800 hover:border-blue-500/80",
+      textColor: "text-gray-100"
     };
   }
 
   const status = statusText.toString().trim().toLowerCase();
 
-  // 🟢 เงื่อนไข: รับยาแล้ว
+  // 🔵 เงื่อนไข 1: "ส่งยาแล้ว" / "จัดส่งแล้ว" (กำลังนำส่ง)
+  if (status.includes("ส่งยาแล้ว") || status.includes("จัดส่งแล้ว")) {
+    return {
+      badgeHtml: `
+        <span class="inline-flex items-center gap-1.5 bg-sky-500/15 text-sky-300 text-xs font-semibold px-2.5 py-1 rounded-full border border-sky-500/40 shadow-sm backdrop-blur-md">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-sky-400"></span>
+          </span>
+          <i data-lucide="truck" class="w-3.5 h-3.5"></i>
+          ส่งยาแล้ว
+        </span>
+      `,
+      cardStyle: "bg-sky-950/30 border-sky-700/60 hover:border-sky-400 shadow-lg shadow-sky-950/40",
+      textColor: "text-sky-100 font-semibold"
+    };
+  }
+
+  // 🟢 เงื่อนไข 2: "รับยาแล้ว" (ปลายทางรับยาเรียบร้อย)
   if (status.includes("รับยาแล้ว")) {
     return {
       badgeHtml: `
-        <span class="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-500/30 shadow-sm">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          ยามาแล้ว
+        <span class="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-300 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-500/40 shadow-sm backdrop-blur-md">
+          <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+          รับยาแล้ว
         </span>
       `,
-      cardStyle: "bg-emerald-950/20 border-emerald-800/60 hover:border-emerald-400 shadow-emerald-950/20"
+      cardStyle: "bg-emerald-950/25 border-emerald-700/60 hover:border-emerald-400 shadow-lg shadow-emerald-950/30",
+      textColor: "text-emerald-100 font-semibold"
     };
   }
 
-  // 🟡 เงื่อนไข: ส่งไม่ครบ / บางส่วน
+  // 🟡 เงื่อนไข 3: "ยาส่งไม่ครบ" / "บางส่วน" / "ขาด"
   if (status.includes("บางส่วน") || status.includes("ไม่ครบ") || status.includes("ขาด")) {
     return {
       badgeHtml: `
-        <span class="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-500/30 shadow-sm">
+        <span class="inline-flex items-center gap-1.5 bg-amber-500/15 text-amber-300 text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-500/40 shadow-sm backdrop-blur-md">
           <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+          <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
           ยาส่งไม่ครบ
         </span>
       `,
-      cardStyle: "bg-amber-950/20 border-amber-800/60 hover:border-amber-400 shadow-amber-950/20"
+      cardStyle: "bg-amber-950/25 border-amber-700/60 hover:border-amber-400 shadow-lg shadow-amber-950/30",
+      textColor: "text-amber-100 font-semibold"
     };
   }
 
-  // ⚪ กรณีอื่นๆ
+  // ⚪ กรณีอื่นๆ / สถานะทั่วไป
   return {
     badgeHtml: "",
-    cardStyle: "bg-gray-900 border-gray-800 hover:border-blue-500/80"
+    cardStyle: "bg-gray-900 border-gray-800 hover:border-blue-500/80",
+    textColor: "text-gray-100"
   };
+}
+
+
+// ==========================================
+// 2. Render Master Grid: ปรับการดึง Style และการเรนเดอร์ UI
+// ==========================================
+function renderMasterGrid(data) {
+  const masterGrid = document.getElementById("master-grid");
+
+  if (!data || data.length === 0) {
+    masterGrid.innerHTML = `
+      <div class="col-span-full text-center py-20 text-gray-400 bg-gray-900 rounded-2xl border border-gray-800">
+        ไม่พบข้อมูลในระบบ
+      </div>
+    `;
+    return;
+  }
+
+  masterGrid.innerHTML = data.map((item, index) => {
+    // ดึงค่าตาม Key คอลัมน์แบบยืดหยุ่น
+    const po = getFieldValue(item, ["PO", "เลขที่ PO", "เลข PO", "PO No"]) || "N/A";
+    const projectName = getFieldValue(item, ["ชื่อโครงการ", "โครงการ", "รายการ", "ชื่อรายการ"]) || "ไม่ระบุชื่อโครงการ";
+    const budgetVal = getFieldValue(item, ["งบประมาณโครงการ", "งบประมาณ", "จำนวนเงิน", "วงเงิน"]);
+    const budget = budgetVal ? `${budgetVal} บาท` : "-";
+
+    // ดึงสถานะรับ-ส่งยา
+    const statusText = getFieldValue(item, ["สถานะรับยา", "สถานะการรับยา", "สถานะการจัดส่ง", "สถานะยา", "สถานะ", "Status"]) || "";
+    
+    // คำนวณ Style, Badge และ Text Color ตามสถานะ
+    const { badgeHtml, cardStyle, textColor } = getMedicineStatusStyle(statusText);
+
+    return `
+      <div class="${cardStyle} border rounded-2xl p-5 transition-all duration-200 shadow-lg flex flex-col justify-between group relative overflow-hidden">
+        
+        <div>
+          <!-- Header Card: PO, Badge สถานะยา, และ งบประมาณ -->
+          <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="bg-blue-950/80 text-blue-300 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border border-blue-800/50">
+                PO: ${po}
+              </span>
+              <!-- แสดง Badge สถานะยา -->
+              ${badgeHtml}
+            </div>
+
+            <span class="text-xs text-emerald-400 font-mono font-medium bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-800/40">
+              งบ: ${budget}
+            </span>
+          </div>
+
+          <!-- ชื่อโครงการ (ปรับสีตัวอักษรตามสถานะด้วย ${textColor}) -->
+          <h2 class="text-base ${textColor} mb-2 line-clamp-2 transition">
+            ${projectName}
+          </h2>
+
+          <!-- แสดงข้อความสถานะแบบเต็มด้านล่างชื่อโครงการ (ถ้ามี) -->
+          ${statusText ? `
+            <div class="mt-2 text-xs text-gray-300 flex items-center gap-1.5 bg-black/30 p-2 rounded-lg border border-white/10 backdrop-blur-sm">
+              <i data-lucide="info" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0"></i>
+              <span class="truncate font-mono">${statusText}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- ปุ่มดูรายละเอียด -->
+        <button 
+          onclick="openDetailModal(${index})"
+          class="mt-4 w-full flex items-center justify-center gap-2 bg-gray-800/90 hover:bg-blue-600 text-gray-200 hover:text-white py-2.5 px-4 rounded-xl text-sm font-medium transition duration-200 shadow-sm border border-white/5"
+        >
+          <i data-lucide="eye" class="w-4 h-4"></i>
+          ดูรายละเอียดทั้งหมด
+        </button>
+      </div>
+    `;
+  }).join("");
+
+  // เรนเดอร์ Lucide Icons ใหม่สำหรับไอคอนที่เพิ่มเข้ามา เช่น truck, check-circle-2, alert-circle
+  lucide.createIcons();
 }
 
 // ==========================================
