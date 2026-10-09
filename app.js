@@ -1,33 +1,20 @@
 /**
  * e-GP Info. Web Application - Main Application Logic
- * Architecture: Static HTML/JS + Tailwind CSS + Google Apps Script API
- * Role: Senior Full-Stack Web Application Developer
  */
 
-// ==========================================
-// 1. Configuration & Global State
-// ==========================================
-// 🔴 นำ Web App URL ที่ได้จาก Google Apps Script (ตัวที่ลงท้ายด้วย /exec) มาวางที่นี่
+// 🔴 1. วาง Web App URL จาก Google Apps Script (ลงท้ายด้วย /exec)
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwpgBQFnsxK5zyz4gyLC3Fd3P-deXRzpH84RAQURGF_2-E1axMCvB84K9CJjPcK589Y/exec";
 
 let globalHeaders = [];
 let globalData = [];
 
-// ==========================================
-// 2. Event Listeners & Initialization
-// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-  // สร้าง Lucide Icons เริ่มต้น
-  if (window.lucide) {
-    lucide.createIcons();
-  }
-  
-  // เรียกดึงข้อมูลจาก Google Sheets ทันทีที่โหลดหน้าเว็บ
+  if (window.lucide) lucide.createIcons();
   fetchSheetData();
 });
 
 // ==========================================
-// 3. API & Data Fetching (พร้อม Error Handling)
+// 1. API & Data Fetching (พร้อมระบบกรอง ArrayFormula)
 // ==========================================
 async function fetchSheetData() {
   const refreshBtn = document.getElementById("refresh-btn");
@@ -37,25 +24,21 @@ async function fetchSheetData() {
 
   if (!masterGrid) return;
 
-  // ปรับ UI ให้แสดงสถานะกำลังโหลดข้อมูล
   if (refreshBtn) refreshBtn.disabled = true;
   if (refreshIcon) refreshIcon.classList.add("animate-spin");
   if (refreshText) refreshText.innerText = "กำลังอัปเดต...";
 
   try {
-    // ตรวจสอบว่าได้ใส่ URL หรือยัง
     if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL")) {
       throw new Error("ยังไม่ได้กำหนดค่า GAS_WEB_APP_URL ในไฟล์ app.js");
     }
 
-    // ดึงข้อมูลผ่าน Fetch API พร้อมตั้งค่า redirect: 'follow'
     const response = await fetch(GAS_WEB_APP_URL, { redirect: 'follow' });
 
     if (!response.ok) {
-      throw new Error(`HTTP Status Error: ${response.status} (${response.statusText})`);
+      throw new Error(`HTTP Status Error: ${response.status}`);
     }
 
-    // ดักจับกรณี Apps Script ติดสิทธิ์การเข้าถึง (ส่งกลับเป็นหน้า HTML Login แทน JSON)
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("text/html")) {
       throw new Error("สิทธิ์การเข้าถึงไม่ถูกต้อง! กรุณาตั้งค่า 'Who has access' ใน Apps Script เป็น 'Anyone'");
@@ -67,17 +50,17 @@ async function fetchSheetData() {
       throw new Error(`Apps Script Error: ${result.error}`);
     }
 
-    // บันทึกข้อมูลเข้า Global Variables
     globalHeaders = result.headers || [];
-    globalData = result.data || [];
+    
+    // กรองเอาเฉพาะแถวที่มีข้อมูลจริง ตัดแถวว่างที่เกิดจาก ArrayFormula
+    const rawData = result.data || [];
+    globalData = rawData.filter(item => isValidRow(item));
 
-    // เรนเดอร์การ์ดข้อมูลลงหน้าเว็บ
     renderMasterGrid(globalData);
 
   } catch (error) {
     console.error("[e-GP App Error]:", error);
     
-    // แสดง Error UI ในกรณีที่ไม่สามารถดึงข้อมูลได้
     masterGrid.innerHTML = `
       <div class="col-span-full text-center py-10 px-4 text-red-400 bg-red-950/30 border border-red-900/80 rounded-2xl shadow-lg backdrop-blur-sm">
         <i data-lucide="alert-triangle" class="w-10 h-10 mx-auto mb-3 text-red-400 animate-bounce"></i>
@@ -92,7 +75,6 @@ async function fetchSheetData() {
     `;
     if (window.lucide) lucide.createIcons();
   } finally {
-    // คืนค่าสถานะปุ่มกลับสู่ปกติ
     if (refreshBtn) refreshBtn.disabled = false;
     if (refreshIcon) refreshIcon.classList.remove("animate-spin");
     if (refreshText) refreshText.innerText = "ดึงข้อมูล / รีเฟรช";
@@ -100,8 +82,23 @@ async function fetchSheetData() {
 }
 
 // ==========================================
-// 4. Helper Functions (Business Logic)
+// 2. Helper Functions
 // ==========================================
+
+/**
+ * ตรวจสอบว่าแถวนั้นมีข้อมูลจริงหรือไม่ (ตัดแถวว่างจากสูตร ArrayFormula)
+ */
+function isValidRow(item) {
+  if (!item) return false;
+  
+  const po = getFieldValue(item, ["PO", "เลขที่ PO", "เลข PO", "PO No"]);
+  const detail = getFieldValue(item, ["รายละเอียด", "รายละเอียดโครงการ", "รายการ", "ชื่อโครงการ", "โครงการ"]);
+  
+  const hasPo = po !== null && String(po).trim() !== "" && String(po).trim() !== "-";
+  const hasDetail = detail !== null && String(detail).trim() !== "" && String(detail).trim() !== "-";
+
+  return hasPo || hasDetail;
+}
 
 /**
  * ดึงค่าข้อมูลจาก Object ตามรายชื่อคอลัมน์ที่เป็นไปได้ (Flexible Column Mapping)
@@ -135,7 +132,7 @@ function getMedicineStatusStyle(statusText) {
 
   const status = statusText.toString().trim().toLowerCase();
 
-  // 1. 🔵 สถานะ "ส่งยาแล้ว" / "จัดส่งแล้ว"
+  // 1. 🔵 ส่งยาแล้ว
   if (status.includes("ส่งยาแล้ว") || status.includes("จัดส่งแล้ว")) {
     return {
       badgeHtml: `
@@ -153,7 +150,7 @@ function getMedicineStatusStyle(statusText) {
     };
   }
 
-  // 2. 🟢 สถานะ "รับยาแล้ว"
+  // 2. 🟢 รับยาแล้ว
   if (status.includes("รับยาแล้ว")) {
     return {
       badgeHtml: `
@@ -168,7 +165,7 @@ function getMedicineStatusStyle(statusText) {
     };
   }
 
-  // 3. 🟡 สถานะ "ยาส่งไม่ครบ" / "บางส่วน" / "ขาด"
+  // 3. 🟡 ยาส่งไม่ครบ
   if (status.includes("บางส่วน") || status.includes("ไม่ครบ") || status.includes("ขาด")) {
     return {
       badgeHtml: `
@@ -183,7 +180,7 @@ function getMedicineStatusStyle(statusText) {
     };
   }
 
-  // 4. ⚪ สถานะทั่วไป / ไม่ระบุ
+  // 4. ⚪ สถานะทั่วไป
   return {
     badgeHtml: "",
     cardStyle: "bg-gray-900 border-gray-800 hover:border-blue-500/80",
@@ -191,8 +188,29 @@ function getMedicineStatusStyle(statusText) {
   };
 }
 
+/**
+ * 💡 [ฟังก์ชันใหม่]: ตรวจสอบคอลัมน์ "สถานะตรวจรับ"
+ * หากพบข้อความมีคำว่า "ตรวจรับเรียบร้อย" ให้ส่งคืน Badge HTML ป้ายกำกับตรวจรับเรียบร้อย
+ */
+function getAcceptanceStatusBadge(acceptanceStatusText) {
+  if (!acceptanceStatusText) return "";
+
+  const status = acceptanceStatusText.toString().trim().toLowerCase();
+
+  if (status.includes("ตรวจรับเรียบร้อย")) {
+    return `
+      <span class="inline-flex items-center gap-1.5 bg-teal-500/15 text-teal-300 text-xs font-semibold px-2.5 py-1 rounded-full border border-teal-500/40 shadow-sm backdrop-blur-md">
+        <i data-lucide="check-check" class="w-3.5 h-3.5 text-teal-400"></i>
+        ตรวจรับเรียบร้อย
+      </span>
+    `;
+  }
+
+  return "";
+}
+
 // ==========================================
-// 5. UI Rendering Engine
+// 3. UI Rendering Engine
 // ==========================================
 
 /**
@@ -212,27 +230,31 @@ function renderMasterGrid(data) {
   }
 
   masterGrid.innerHTML = data.map((item, index) => {
-    // ค้นหาข้อมูลตาม Field
     const po = getFieldValue(item, ["PO", "เลขที่ PO", "เลข PO", "PO No"]) || "N/A";
-    const projectName = getFieldValue(item, ["ชื่อโครงการ", "โครงการ", "รายการ", "ชื่อรายการ"]) || "ไม่ระบุชื่อโครงการ";
+    const detailText = getFieldValue(item, ["รายละเอียด", "รายละเอียดโครงการ", "รายการ", "ชื่อโครงการ", "โครงการ"]) || "ไม่ระบุรายละเอียด";
+
     const budgetVal = getFieldValue(item, ["งบประมาณโครงการ", "งบประมาณ", "จำนวนเงิน", "วงเงิน"]);
     const budget = budgetVal ? `${budgetVal} บาท` : "-";
 
-    // ดึงข้อมูลสถานะยาเพื่อกำหนด Style
+    // 1. ดึงสถานะรับ-ส่งยา
     const statusText = getFieldValue(item, ["สถานะรับยา", "สถานะการรับยา", "สถานะการจัดส่ง", "สถานะยา", "สถานะ", "Status"]) || "";
     const { badgeHtml, cardStyle, textColor } = getMedicineStatusStyle(statusText);
+
+    // 2. 💡 [ดึงสถานะตรวจรับ]: ตรวจสอบคอลัมน์ "สถานะตรวจรับ"
+    const acceptanceText = getFieldValue(item, ["สถานะตรวจรับ", "สถานะการตรวจรับ", "การตรวจรับ", "ตรวจรับ"]) || "";
+    const acceptanceBadgeHtml = getAcceptanceStatusBadge(acceptanceText);
 
     return `
       <div class="${cardStyle} border rounded-2xl p-5 transition-all duration-200 shadow-lg flex flex-col justify-between group relative overflow-hidden">
         
         <div>
-          <!-- Header Card: PO, Badge และ งบประมาณ -->
           <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <span class="bg-blue-950/80 text-blue-300 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border border-blue-800/50">
                 PO: ${po}
               </span>
               ${badgeHtml}
+              ${acceptanceBadgeHtml}
             </div>
 
             <span class="text-xs text-emerald-400 font-mono font-medium bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-800/40">
@@ -240,12 +262,10 @@ function renderMasterGrid(data) {
             </span>
           </div>
 
-          <!-- ชื่อโครงการ -->
           <h2 class="text-base ${textColor} mb-2 line-clamp-2 transition">
-            ${projectName}
+            ${detailText}
           </h2>
 
-          <!-- แสดงข้อความสถานะฉบับเต็ม (ถ้ามี) -->
           ${statusText ? `
             <div class="mt-2 text-xs text-gray-300 flex items-center gap-1.5 bg-black/30 p-2 rounded-lg border border-white/10 backdrop-blur-sm">
               <i data-lucide="info" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0"></i>
@@ -254,7 +274,6 @@ function renderMasterGrid(data) {
           ` : ''}
         </div>
 
-        <!-- ปุ่มเปิด Modal ดูรายละเอียด -->
         <button 
           onclick="openDetailModal(${index})"
           class="mt-4 w-full flex items-center justify-center gap-2 bg-gray-800/90 hover:bg-blue-600 text-gray-200 hover:text-white py-2.5 px-4 rounded-xl text-sm font-medium transition duration-200 shadow-sm border border-white/5"
@@ -270,14 +289,14 @@ function renderMasterGrid(data) {
 }
 
 /**
- * เรนเดอร์และเปิด Detail Modal (แสดง Sub-Cards ละ 4 คอลัมน์)
+ * เรนเดอร์และเปิด Detail Modal
  */
 function openDetailModal(dataIndex) {
   const item = globalData[dataIndex];
   if (!item) return;
 
   const po = getFieldValue(item, ["PO", "เลขที่ PO", "เลข PO", "PO No"]) || "N/A";
-  const projectName = getFieldValue(item, ["ชื่อโครงการ", "โครงการ", "รายการ", "ชื่อรายการ"]) || "";
+  const detailText = getFieldValue(item, ["รายละเอียด", "รายละเอียดโครงการ", "รายการ", "ชื่อโครงการ", "โครงการ"]) || "-";
 
   const modalPo = document.getElementById("modal-po");
   const modalProject = document.getElementById("modal-project");
@@ -285,9 +304,8 @@ function openDetailModal(dataIndex) {
   const detailModal = document.getElementById("detail-modal");
 
   if (modalPo) modalPo.innerText = `รายละเอียดโครงการ (PO: ${po})`;
-  if (modalProject) modalProject.innerText = projectName;
+  if (modalProject) modalProject.innerText = detailText;
 
-  // แบ่งหัวข้อคอลัมน์เป็น Chunk ละ 4 รายการ
   const chunkSize = 4;
   const chunks = [];
   for (let i = 0; i < globalHeaders.length; i += chunkSize) {
@@ -296,7 +314,6 @@ function openDetailModal(dataIndex) {
 
   if (modalBody) {
     modalBody.innerHTML = chunks.map((chunkHeaders) => {
-      // เตรียมข้อความสำหรับปุ่ม Copy ประจำ Sub-card
       const copyText = chunkHeaders
         .map(col => `${col}: ${item[col] !== undefined && item[col] !== '' ? item[col] : '-'}`)
         .join('\n')
@@ -336,20 +353,13 @@ function openDetailModal(dataIndex) {
   if (window.lucide) lucide.createIcons();
 }
 
-/**
- * ปิด Detail Modal
- */
 function closeModal() {
   const detailModal = document.getElementById("detail-modal");
   if (detailModal) detailModal.classList.add("hidden");
 }
 
-/**
- * ฟังก์ชัน คัดลอกข้อมูลใน Sub-card ลง Clipboard
- */
 function copyCardText(btnElement, textToCopy) {
   if (!navigator.clipboard) {
-    // Fallback สำหรับเบราว์เซอร์เก่า
     const textArea = document.createElement("textarea");
     textArea.value = textToCopy;
     document.body.appendChild(textArea);
@@ -379,4 +389,4 @@ function updateCopyButtonUI(btnElement) {
     btnElement.innerHTML = originalHTML;
     if (window.lucide) lucide.createIcons();
   }, 2000);
-}
+    }
