@@ -1,66 +1,92 @@
 <!DOCTYPE html>
-<html lang="th" class="dark">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ข้อมูลจัดทำ e-GP ห้องยา สบปราบ</title>
+  <title>ระบบติดตามข้อมูล e-GP / PO</title>
   
+  <!-- PWA & Mobile Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#030712">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Sarabun', sans-serif; }
-  </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-950 text-gray-100 min-h-screen font-sans p-4 md:p-8">
 
-  <header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-30 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
-      <div class="flex items-center gap-3">
-        <div class="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
-          <i data-lucide="file-text" class="w-6 h-6"></i>
-        </div>
-        <div>
-          <h1 class="text-lg font-bold text-white">e-GP Information Tracking</h1>
-          <p class="text-xs text-gray-400">ข้อมูลจัดทำ e-GP ห้องยา สบปราบ</p>
-        </div>
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Header Bar -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
+      <div>
+        <h1 class="text-xl font-bold text-white flex items-center gap-2">
+          <i data-lucide="layout-grid" class="text-blue-400"></i>
+          ระบบติดตามข้อมูล e-GP / PO
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">แสดงผลข้อมูลจาก Google Sheets และสถานะการรับยา</p>
       </div>
 
       <button 
         id="refresh-btn" 
         onclick="fetchSheetData()"
-        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition shadow-lg shadow-blue-900/30 active:scale-95 disabled:opacity-50"
+        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white px-5 py-2.5 rounded-xl transition duration-200 shadow-lg text-sm font-medium"
       >
         <i data-lucide="refresh-cw" id="refresh-icon" class="w-4 h-4"></i>
         <span id="refresh-text">ดึงข้อมูล / รีเฟรช</span>
       </button>
     </div>
-  </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
-    <div id="master-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <!-- Search Bar Control (Ctrl+F Style Search) -->
+    <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="relative w-full">
+        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+        <input 
+          type="text" 
+          id="search-input" 
+          oninput="handleSearch(this.value)"
+          placeholder="ค้นหาข้อมูลทุกคอลัมน์ (เช่น เลข PO, ชื่อโครงการ, ชื่อยา)..." 
+          class="w-full bg-gray-950 border border-gray-800 rounded-xl pl-12 pr-10 py-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
+        >
+        <button onclick="clearSearch()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs bg-gray-800 px-2 py-1 rounded-lg">
+          ล้าง
+        </button>
       </div>
-  </main>
+      <div id="search-result-count" class="text-xs text-gray-400 whitespace-nowrap">
+        แสดงทั้งหมด <span id="total-count" class="font-bold text-blue-400">0</span> รายการ
+      </div>
+    </div>
 
-  <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-gray-900 border border-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <!-- Master View Container -->
+    <div id="master-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- ข้อมูลการ์ดหลักจะถูก Render ที่นี่ -->
+    </div>
+
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex justify-center items-center p-4 overflow-y-auto">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
       
-      <div class="p-5 border-b border-gray-800 flex justify-between items-start bg-gray-900/80">
+      <div class="flex justify-between items-center p-5 border-b border-gray-800 bg-gray-800/40 rounded-t-2xl">
         <div>
-          <span id="modal-po" class="text-xs font-mono font-semibold text-blue-400 bg-blue-950/80 px-2.5 py-1 rounded-md border border-blue-800/50"></span>
-          <h3 id="modal-project" class="text-base font-semibold text-white mt-2 leading-relaxed"></h3>
+          <h2 id="modal-po" class="text-lg font-bold text-white">รายละเอียดโครงการ</h2>
+          <p id="modal-project" class="text-xs text-gray-400 mt-1 line-clamp-1"></p>
         </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800 transition">
-          <i data-lucide="x" class="w-6 h-6"></i>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-gray-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <div id="modal-body" class="p-5 overflow-y-auto space-y-4 flex-grow">
-        </div>
+      <div id="modal-body" class="p-6 overflow-y-auto space-y-4">
+        <!-- Sub-cards -->
+      </div>
 
-      <div class="p-4 border-t border-gray-800 bg-gray-900/50 flex justify-end">
-        <button onclick="closeModal()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm px-5 py-2 rounded-xl transition">
+      <div class="p-4 border-t border-gray-800 flex justify-end bg-gray-800/20 rounded-b-2xl">
+        <button onclick="closeModal()" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2 rounded-xl text-sm transition">
           ปิดหน้าต่าง
         </button>
       </div>
@@ -68,6 +94,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2.0"></script>
+  <script src="app.js"></script>
 </body>
 </html>
