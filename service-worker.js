@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egp-app-v3';
+const CACHE_NAME = 'egp-app-v3.2';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -27,15 +27,25 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
 
-  // ยกเว้นการแคชสำหรับ Google Apps Script API เพื่อให้ดึงข้อมูลสดเสมอ
-  if (requestUrl.hostname.includes('script.google.com') || requestUrl.hostname.includes('googleusercontent.com')) {
+  // Bypass สำหรับ Google Apps Script API เพื่อให้ดึงข้อมูลสดเสมอ
+  if (
+    requestUrl.hostname.includes('script.google.com') || 
+    requestUrl.hostname.includes('googleusercontent.com')
+  ) {
     event.respondWith(
-      fetch(event.request).catch(() => new Response(JSON.stringify({ error: 'Offline' }), { headers: { 'Content-Type': 'application/json' } }))
+      fetch(event.request).catch(() => {
+        return new Response(
+          JSON.stringify({ error: 'คุณกำลังอยู่ในสถานะ Offline ไม่สามารถเชื่อมต่อฐานข้อมูลได้' }),
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+      })
     );
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.match(event.request).then((cached) => {
+      return cached || fetch(event.request);
+    })
   );
 });
